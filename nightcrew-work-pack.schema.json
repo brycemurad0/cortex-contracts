@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/nightcrew-work-pack.v0.json",
+  "title": "Cortex NightCrewWorkPack (DRAFT v0)",
+  "description": "A batch of background read-only work items for the nightly loop. Represents a collection of analysis tasks to be processed during the night crew cycle. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pack_id",
+    "generated_at",
+    "items",
+    "budget",
+    "container"
+  ],
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ULID/UUID — unique identifier for this work pack."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this pack was generated (ISO-8601 UTC)."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "target", "rationale"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["analyze", "audit", "index", "harvest", "verify", "summarize"],
+            "description": "The kind of work to perform."
+          },
+          "target": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The target of the work (path, URL, identifier)."
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Rationale for why this item is in the pack."
+          }
+        }
+      },
+      "description": "The work items in this pack."
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_tokens", "max_usd_cents", "max_duration_seconds"],
+      "properties": {
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum tokens that can be consumed for this pack."
+        },
+        "max_usd_cents": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum USD cents that can be spent."
+        },
+        "max_duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum wall-clock time in seconds."
+        }
+      },
+      "description": "Budget constraints for executing this pack."
+    },
+    "container": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Mnemos container for storing results."
+    }
+  }
+}

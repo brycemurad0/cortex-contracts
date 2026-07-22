@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/work-request.v0.json",
+  "title": "Cortex WorkRequest (DRAFT v0)",
+  "description": "What a surface (PLO/pocket-agent) submits to be enqueued. This is the initial submission before becoming a TaskEnvelope. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "source",
+    "intent",
+    "refined_prompt",
+    "acceptance_criteria",
+    "priority",
+    "requested_by",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ULID/UUID — client-generated idempotency key, stable across retries."
+    },
+    "source": {
+      "type": "string",
+      "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"],
+      "description": "Originating surface."
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Coarse intent classification for routing."
+    },
+    "refined_prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The refined/punched-up prompt ready for execution."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Definition-of-done criteria the grader will check."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"],
+      "description": "Business priority for queue ordering."
+    },
+    "requested_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identity of the requesting user or system."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the request was created (ISO-8601 UTC)."
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/refine-punchup-response.v0.json",
+  "title": "Cortex RefinePunchupResponse (DRAFT v0)",
+  "description": "The 2xx success body returned by the refine-punchup gate. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer. Surfaces-Builder is the named consumer; agent-fabric's in-process engine is the named producer (ADR-0023). Status: DRAFT v0. v0→v1 promotion gated on a real end-to-end round-trip through the engine. Per punch-up standard §0.7, the gate emits THREE success outcomes: ready (clean + small + verifiable), clarify (low confidence or unresolved architecture concern), decompose (multi-deliverable, creates children that re-enter the gate). Transport errors (4xx/5xx/timeout) are OUT-OF-BAND with a separate shape; see refine-punchup-request for context.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "envelope"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ready", "clarify", "decompose"],
+      "description": "The punch-up gate's success decision. Per punch-up standard §0.7: ready (clean + small + verifiable), clarify (low confidence or architecture concern, route back to surface), decompose (multi-deliverable, children re-enter the gate with project scope inherited). decompose is a happy-path outcome, NOT a variant of error."
+    },
+    "envelope": {
+      "type": "object",
+      "description": "The TaskEnvelope after the gate. On status:ready, envelope.refined_prompt + envelope.acceptance_criteria are populated. On status:clarify, envelope.clarification is populated. On status:decompose, the spine has created children with the original id as parent_id. Permissive on additional properties (additionalProperties: true) for the same reason as the request envelope: real envelopes have ~26 fields beyond the canonical TaskEnvelope's 25; the inlined subset here is the minimum the response needs to communicate. The server MUST return envelopes with additional fields when they're set on the post-punchup envelope. v1 design question: should the canonical TaskEnvelope schema also be loosened? Separate ADR conversation.",
+      "additionalProperties": true,
+      "required": ["id", "project", "source", "title", "capability", "prompt", "status"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "project": {
+          "type": "string",
+          "enum": ["cortex", "agent-fabric", "mnemos", "forge", "surfaces", "personal-life-os", "pocket-agent", "fleet-terminal", "maestro", "nightcrew", "life-os"]
+        },
+        "source": {
+          "type": "string",
+          "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"]
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "capability": {
+          "type": "string",
+          "enum": ["code", "research", "write", "refactor", "review", "data", "ops", "chat"]
+        },
+        "prompt": { "type": "string", "minLength": 1 },
+        "context_refs": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "preferred_agent": { "type": "string", "enum": ["auto", "claude-code", "codex", "cursor", "kimi", "openclaw", "hermes-local"], "default": "auto" },
+        "status": {
+          "type": "string",
+          "enum": ["refining", "clarifying", "blocked", "queued", "dispatched", "running", "reviewing", "done", "failed", "needs_review"],
+          "default": "refining"
+        },
+        "refined_prompt": { "type": ["string", "null"], "description": "populated on status:ready" },
+        "acceptance_criteria": { "type": "array", "items": { "type": "string" }, "description": "populated on status:ready" },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+        "complexity": { "type": ["string", "null"], "enum": ["trivial", "simple", "standard", "complex", null] },
+        "clarification": {
+          "type": ["object", "null"],
+          "properties": { "question": { "type": "string" }, "answer": { "type": ["string", "null"] } }
+        }
+      }
+    },
+    "clarification": {
+      "type": "object",
+      "description": "Present on status:clarify. The question the gate wants answered. clarification_id is the AF :3333 clarifications row id (optional).",
+      "required": ["question"],
+      "properties": {
+        "question": { "type": "string", "minLength": 1 },
+        "clarification_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "parent_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Present on status:decompose. The new parent id of the children the spine has just created. Children re-enter the punch-up gate with project scope inherited."
+    }
+  }
+}

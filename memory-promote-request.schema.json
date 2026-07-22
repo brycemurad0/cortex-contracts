@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/memory-promote-request.v0.json",
+  "title": "Cortex MemoryPromoteRequest (DRAFT v0)",
+  "description": "Canonical wire shape for POST /promote on mnemos. Mirrors the historical main.py:PromoteRequest BaseModel but is the SINGLE source of truth per ADR-0014; main.py imports and re-types it. The keystone is `additionalProperties:false` — without it a producer could inject rogue fields (e.g. undeclared provenance metadata, hidden attestor overrides) that consumers would silently pick up. `memory_id` and `to_container` are the only required fields; `attestor` is server-required (promotion is a reviewed ritual, never automatic) but optional on the wire so the keystone can emit a clean 'attestor required' message before the handler's own check. The `to_container` MUST be a protected-root container — ordinary containers belong on /store. Status: DRAFT; bump $id on breaking changes. Note: this is the WRITE shape for the review/attest ritual; the promoted memory's full row carries additional server-stamped fields (promoted_memory_id, attestation_id, from_container, promoted_at) that are NEVER accepted on input.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["memory_id", "to_container"],
+  "properties": {
+    "memory_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The memory id to promote. Must be a real, non-tombstoned memory row. Server-side 404s on missing."
+    },
+    "to_container": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target protected-root container. Server normalizes via normalize_container_tag() and asserts is_protected_root() — non-root targets 400 with the canonical 'use /store for ordinary containers' guidance. Examples: 'cortex', 'thislive', 'mnemos'."
+    },
+    "attestor": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "WHO is attesting this promotion is a reviewed ritual (human | system:cron-name | mcp-bridge:user). Required at the handler level (400 if absent) but optional on the wire so the keystone's first pass is shape-only and the handler's second pass enforces the business rule."
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Free-form WHY this memory is being promoted. Recorded in the audit log alongside the attestation_id. Optional but encouraged."
+    }
+  }
+}

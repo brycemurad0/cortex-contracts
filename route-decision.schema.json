@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/route-decision.v0.json",
+  "title": "Cortex RouteDecision (DRAFT v0)",
+  "description": "Maestro's per-request routing record. Replaces the ad-hoc `_maestro` block on /v1/chat/completions responses (see maestro/maestro/api/server.py). Status: DRAFT; bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "task_id",
+    "tier",
+    "routing_mode",
+    "model",
+    "vega_confidence",
+    "consensus_fired",
+    "fallback_chain",
+    "session_id",
+    "decided_at"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "ULID/UUID — join key for Quorum labels and Mnemos memories."
+    },
+    "task_id": {
+      "type": ["string", "null"],
+      "description": "TaskEnvelope.id when invoked from the spine; null for direct callers."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["trivial", "simple", "standard", "complex"]
+    },
+    "routing_mode": {
+      "type": "string",
+      "enum": ["sonnet-anchored", "vega-direct", "vega-blocking-quorum", "passthrough", "fallback-sql"]
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Final executor model identifier (Maestro's canonical alias)."
+    },
+    "vega_confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "consensus_fired": { "type": "boolean" },
+    "fallback_chain": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "session_id": {
+      "type": ["string", "null"],
+      "description": "Set when the request was pinned to a session for model continuity."
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# Build artifacts for the @cortex/contracts npm package + cortex-contracts wheel.
+# Prefer building out-of-tree (npm pack --pack-destination <dir>, uv build
+# --out-dir <dir> / python -m build --outdir <dir>); these entries keep an
+# accidental in-tree build from dirtying the canonical contracts source.
+
+# npm
+node_modules/
+*.tgz
+
+# Python (wheel/sdist)
+dist/
+build/
+*.egg-info/
+cortex_contracts.egg-info/

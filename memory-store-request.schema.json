@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/memory-store-request.v0.json",
+  "title": "Cortex MemoryStoreRequest (DRAFT v0)",
+  "description": "Canonical wire shape for POST /store on mnemos (and every alias surface: /mobile/memory). Mirrors the historical main.py:StoreRequest BaseModel but is the SINGLE source of truth per ADR-0014; main.py imports and re-types it. The keystone is `additionalProperties:false` — without it a producer could inject rogue fields (e.g. undeclared provenance metadata, hidden session links) that consumers would silently pick up. `raw_text` is the only required field; every other field is an optional provenance/routing metadata. `valid_from` is a date-time when present. Status: DRAFT; bump $id on breaking changes. Note: this is the WRITE shape; the read shape (mnemos.db:store_memory row) carries additional server-stamped fields (memory_id, content_hash, indexed_at) that are never accepted on input.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["raw_text"],
+  "properties": {
+    "raw_text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The memory body. Non-empty. Whitespace-trim happens server-side; the contract is the wire shape, not the post-trim shape."
+    },
+    "container_tag": {
+      "type": "string",
+      "default": "hermes-pending",
+      "description": "Target container (alias or canonical). Server normalizes via normalize_container_tag(). Defaults to 'hermes-pending' for unscoped writes."
+    },
+    "memory_type": {
+      "type": "string",
+      "default": "episodic",
+      "enum": [
+        "episodic",
+        "semantic",
+        "fact",
+        "raw_session",
+        "operational",
+        "receipt",
+        "block"
+      ],
+      "description": "Memory class. Defaults to 'episodic' (raw conversation). The 7-value enum covers the producer fleet: 'episodic' (turns) | 'semantic' (consolidated) | 'fact' (atomic claims) | 'raw_session' (session metadata, not body) | 'operational' (system/internal) | 'receipt' (execution-receipt mirror) | 'block' (pinned structural entries)."
+    },
+    "actor_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Provenance — who is writing (e.g. user id, agent name)."
+    },
+    "actor_class": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Provenance — what kind of writer (human | agent | system | cron | mcp-bridge)."
+    },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "default": null,
+      "description": "Writer-supplied confidence score, 0..1. Null when the writer has no opinion."
+    },
+    "source_provider": {
+      "type": "string",
+      "default": "mnemos",
+      "description": "Provenance — originating system (mnemos default; fleet sets 'hermes' | 'cortex' | 'mavis' | etc.)."
+    },
+    "source_record_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Id of the source record in the producer's namespace (turn id, receipt id, session message id)."
+    },
+    "source_container": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Provenance — container the source record came from (e.g. hermes session tag)."
+    },
+    "source_node": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Provenance — fleet node (maestro-router | jarvis | nas-bge)."
+    },
+    "source_surface": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Provenance — user-facing surface (pocket-agent | fleet-terminal | cron)."
+    },
+    "metadata": {
+      "type": ["object", "null"],
+      "default": null,
+      "additionalProperties": true,
+      "description": "Provenance — free-form caller metadata. additionalProperties: true (unlike the parent) because callers do ship opaque blobs here; the keystone still rejects UNEXPECTED TOP-LEVEL keys (which is what additionalProperties:false on the parent covers)."
+    },
+    "valid_from": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "ISO-8601 / RFC-3339 timestamp; null when unspecified."
+    },
+    "memory_block_level": {
+      "type": "integer",
+      "default": 2,
+      "minimum": 0,
+      "maximum": 2,
+      "description": "0=session, 1=container, 2=memory (default). Drives block-vs-memory dispatch on the read side."
+    },
+    "is_synthesized": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this memory is a synthesis of other memories (vs. a direct write)."
+    },
+    "parent_memory_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "For synthesis children — the synthesized memory this one rolled up."
+    },
+    "session_id": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Mnemos session id when this write is part of a session (see /sessions)."
+    },
+    "promoted": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when this write is the result of a /promote ritual (vs. an ordinary /store). Set by the server on promote; caller-supplied true is allowed for backfill but ignored as a signal."
+    }
+  }
+}

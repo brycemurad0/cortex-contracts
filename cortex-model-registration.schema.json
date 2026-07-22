@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/cortex-model-registration.v0.json",
+  "title": "Cortex ModelRegistration (DRAFT v0)",
+  "description": "Forge's egress to Maestro's cortex_models routing table. Forge POSTs this on a gate-pass (an eval-beating adapter served on the local GPU) so Maestro can route that discipline local-first — closing the recursive flywheel. `artifact_sha256` is the idempotency key: re-registering the same (discipline_key, artifact_sha256) is a no-op. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer. Status: DRAFT; bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "discipline_key",
+    "location",
+    "eval_pointer",
+    "artifact_sha256"
+  ],
+  "properties": {
+    "discipline_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The Forge discipline/lane this adapter serves (e.g. 'code_review'). Maestro maps it to a routing domain."
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where the adapter is served — the SGLang served-model id / --lora-paths name, or an OpenAI-compatible base URL + model alias the router can call."
+    },
+    "eval_pointer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path/URL to the held-out eval result that justifies routing here (e.g. evals/results/code_review_adapter_2026-06-22.json). The receipt that proves the adapter beat the base."
+    },
+    "artifact_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 of the served adapter artifact (adapter_model.safetensors). Idempotency key — re-registering the same (discipline_key, artifact_sha256) is a no-op."
+    },
+    "served": {
+      "type": "boolean",
+      "description": "Whether the adapter is currently served and routable. Defaults true on a gate-pass registration; set false to deregister a lane."
+    },
+    "base_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The base model's score on the same eval suite (context for the routing weight)."
+    },
+    "adapter_score": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The served adapter's score on the held-out eval (must exceed base_score by the promotion margin)."
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When Forge fired the registration (ISO-8601 UTC)."
+    }
+  }
+}

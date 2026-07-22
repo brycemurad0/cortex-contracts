@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/task-enqueue-request.v0.json",
+  "title": "Cortex TaskEnqueueRequest (DRAFT v0)",
+  "description": "The canonical task-enqueue payload a surface (personal-life-os / pocket-agent / fleet-terminal / desktop) POSTs to agent-fabric's POST /cortex/enqueue (Suite Link §4.1). This is the single stable intake URL for surfaces. agent-fabric validates this shape, builds a conforming cortex/contracts TaskEnvelope from it (minting the id), returns a dispatch_id immediately, and runs the task in-process on the dynamic workflow engine (runWorkflow / runComplexWorkflowAsync; per ADR-0023 the engine supersedes the n8n spine). Per ADR-0014 the shape is authored once here and imported by every consumer; agent-fabric NEVER redefines it. Status: DRAFT v0; v0->v1 gated on a real end-to-end round-trip through the in-process engine (enqueue -> engine -> receipt). Bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source", "title", "description", "project", "tier"],
+  "properties": {
+    "source": {
+      "type": "string",
+      "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"],
+      "description": "Originating surface. Lifts the TaskEnvelope.source / WorkRequestSource enum verbatim; NOT redefined. Clarifications route back here and it scopes the Mnemos container."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Short human label. Becomes TaskEnvelope.title."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32000,
+      "description": "Full instruction for the executing agent. Becomes TaskEnvelope.prompt; the spine's cortex.refine.punchup may rewrite it into refined_prompt."
+    },
+    "project": {
+      "type": "string",
+      "enum": ["cortex", "agent-fabric", "mnemos", "forge", "surfaces", "personal-life-os", "pocket-agent", "fleet-terminal", "maestro", "nightcrew", "life-os"],
+      "description": "Coarse routing label. Lifts the TaskEnvelope.project enum verbatim; maps to a Mnemos container root and is carried through decomposition."
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["trivial", "simple", "standard", "complex"],
+      "description": "Complexity tier. Drives whether the enqueue starts a single dispatch or a multi-step dynamic workflow ('complex' => engine), and seeds the model router's tier. Mirrors RouteDecision.tier / TaskEnvelope.complexity."
+    },
+    "assigned_agent": {
+      "type": ["string", "null"],
+      "enum": ["claude-code", "codex", "cursor", "kimi", "openclaw", "hermes-local", null],
+      "default": null,
+      "description": "Optional explicit executor override. Lifts the TaskEnvelope.assigned_agent enum verbatim. null => the spine/Maestro routes."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"],
+      "default": "normal",
+      "description": "Business priority for queue ordering. Lifts the WorkRequestPriority enum verbatim."
+    },
+    "due_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "default": null,
+      "description": "Optional ISO-8601 UTC deadline. Advisory; the spine may use it for queue ordering / escalation."
+    },
+    "context_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "default": null,
+      "description": "Optional pointer to source context (mnemos://, repo://, file://, https://). Becomes a TaskEnvelope.context_refs entry."
+    },
+    "idempotency_key": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Optional client-generated idempotency key, stable across retries. When set, agent-fabric SHOULD dedupe; when null the server mints the TaskEnvelope.id and dispatch_id fresh."
+    },
+    "judge_alias": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Optional intent-punchup judge model alias. Controls only the classifier/synthesizer judge seat; lane execution remains routed by Maestro. Surfaces auto mode resolves live availability before POSTing a concrete alias."
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/learning-trace.v0.json",
+  "title": "Cortex LearningTrace (DRAFT v0)",
+  "description": "Captures a routing+outcome pair for training. Records the relationship between a routing decision and its actual outcome, enabling feedback loops for model improvement. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "decision_id",
+    "task_id",
+    "route",
+    "outcome",
+    "grade",
+    "cost",
+    "created_at"
+  ],
+  "properties": {
+    "decision_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the RouteDecision that made the routing choice."
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the task being executed."
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "tier"],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The model that was selected."
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["trivial", "simple", "standard", "complex"],
+          "description": "The complexity tier assigned."
+        }
+      },
+      "description": "The route that was taken (model and tier)."
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "cancelled", "timed_out"],
+      "description": "The actual outcome of execution."
+    },
+    "grade": {
+      "type": "string",
+      "enum": ["excellent", "good", "acceptable", "poor", "ungraded"],
+      "description": "The quality grade assigned by the grader."
+    },
+    "cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_tokens", "output_tokens", "usd_cents"],
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Input tokens consumed."
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Output tokens produced."
+        },
+        "usd_cents": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cost in USD cents."
+        }
+      },
+      "description": "Cost metrics for this execution."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this trace was recorded (ISO-8601 UTC)."
+    }
+  }
+}

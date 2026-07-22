@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cortex-contracts"
+version = "0.2.0"
+description = "Canonical Cortex shared JSON Schema contracts (ADR-0014) as an installable, versioned wheel. Ships the same canonical *.schema.json files as package data (one source, no divergent copies) plus loaders: contracts_dir(), get_schema(), all_schemas()."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["cortex", "contracts", "json-schema", "schemas", "adr-0014"]
+
+# Zero runtime dependencies. The wheel ships the schemas as data and exposes
+# loaders; a consumer supplies its own validator (jsonschema/pydantic/etc.) and
+# feeds it the dict returned by get_schema().
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/brycemurad0/cortex-contracts"
+
+# ── Packaging (hatchling) ──
+#
+# The package module is cortex_contracts/. The canonical schemas live one level
+# up (cortex/contracts/*.schema.json) — the SINGLE source of truth. Rather than
+# committing a second copy under cortex_contracts/schemas/, we force-include the
+# sibling *.schema.json files INTO the wheel at build time, so the built wheel is
+# self-contained but the git tree keeps exactly one copy of each schema.
+[tool.hatch.build.targets.wheel]
+packages = ["cortex_contracts"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"admin-update-node-request.schema.json" = "cortex_contracts/schemas/admin-update-node-request.schema.json"
+"cortex-model-registration.schema.json" = "cortex_contracts/schemas/cortex-model-registration.schema.json"
+"execution-receipt.schema.json" = "cortex_contracts/schemas/execution-receipt.schema.json"
+"health-status.schema.json" = "cortex_contracts/schemas/health-status.schema.json"
+"learning-trace.schema.json" = "cortex_contracts/schemas/learning-trace.schema.json"
+"memory-promote-request.schema.json" = "cortex_contracts/schemas/memory-promote-request.schema.json"
+"memory-store-request.schema.json" = "cortex_contracts/schemas/memory-store-request.schema.json"
+"nightcrew-work-pack.schema.json" = "cortex_contracts/schemas/nightcrew-work-pack.schema.json"
+"refine-punchup-request.schema.json" = "cortex_contracts/schemas/refine-punchup-request.schema.json"
+"refine-punchup-response.schema.json" = "cortex_contracts/schemas/refine-punchup-response.schema.json"
+"route-decision.schema.json" = "cortex_contracts/schemas/route-decision.schema.json"
+"session-promote-on-close-request.schema.json" = "cortex_contracts/schemas/session-promote-on-close-request.schema.json"
+"session-store-request.schema.json" = "cortex_contracts/schemas/session-store-request.schema.json"
+"synthesis-request.schema.json" = "cortex_contracts/schemas/synthesis-request.schema.json"
+"task-enqueue-request.schema.json" = "cortex_contracts/schemas/task-enqueue-request.schema.json"
+"task-envelope.schema.json" = "cortex_contracts/schemas/task-envelope.schema.json"
+"training-data-candidate.schema.json" = "cortex_contracts/schemas/training-data-candidate.schema.json"
+"training-label.schema.json" = "cortex_contracts/schemas/training-label.schema.json"
+"verification-evidence.schema.json" = "cortex_contracts/schemas/verification-evidence.schema.json"
+"work-request.schema.json" = "cortex_contracts/schemas/work-request.schema.json"
+
+# The sdist ships the module and the canonical schemas (from their real home) so
+# a wheel can be rebuilt from the sdist with the same one-source guarantee.
+[tool.hatch.build.targets.sdist]
+include = [
+  "cortex_contracts/",
+  "*.schema.json",
+  "pyproject.toml",
+  "README.md",
+  "LICENSE",
+]

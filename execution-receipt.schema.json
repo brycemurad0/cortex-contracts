@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/execution-receipt.v1.json",
+  "title": "Cortex ExecutionReceipt (v1)",
+  "description": "The single wire shape for a finished dispatched task, posted to agent-fabric POST /receipts and broadcast on GET /events as receipt.created. One shape covers three producers: (1) engine-orchestrated work (agent-fabric dynamic workflow engine — ADR-0023), (2) Hermes tracked-bypass, (3) surface-direct dispatch. Per ADR-0017, only the orchestration-join fields (af_dispatch_id, af_worker_session_id, decision_id) are required for engine-orchestrated receipts; they are null/absent for bypass/direct producers. receipt_id is a CLIENT-GENERATED idempotency key, stable across outbox retries, so consumers dedupe safely. v1 supersedes the v0 draft (which over-constrained: every field required + additionalProperties:false, which forbade both the dispatch block and Hermes-bypass receipts). Joins to the engine via task_id, to a Maestro RouteDecision via decision_id. Consumed by the engine grader, Maestro label/cost stats, Forge label-harvest, and all surface consumers. Bump $id on the next breaking change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "task_id",
+    "node",
+    "assigned_agent",
+    "outcome",
+    "started_at",
+    "ended_at",
+    "duration_ms"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Client-generated idempotency key (ULID/UUID), created ONCE by the producer before the first POST and reused on every retry/outbox replay. Consumers dedupe on this. Servers MUST NOT regenerate it."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "The spine task this receipt closes. UUID for spine-orchestrated tasks; for bypass/direct producers with no spine task, a producer-scoped id (still required for joins/audit)."
+    },
+    "af_dispatch_id": {
+      "type": ["string", "null"],
+      "description": "Set by agent-fabric /dispatch for spine-orchestrated work. Null for Hermes-bypass and surface-direct receipts."
+    },
+    "af_worker_session_id": {
+      "type": ["string", "null"],
+      "description": "Set by agent-fabric for spine-orchestrated work. Null for bypass/direct receipts."
+    },
+    "decision_id": {
+      "type": ["string", "null"],
+      "description": "Joins with RouteDecision.decision_id when the model call was routed through Maestro. Null otherwise."
+    },
+    "node": { "type": "string", "minLength": 1, "description": "Where this ran (fleet node id)." },
+    "assigned_agent": { "type": "string", "minLength": 1, "description": "Matches TaskEnvelope.assigned_agent." },
+    "outcome": {
+      "type": "string",
+      "enum": ["succeeded", "failed", "cancelled", "timed_out"]
+    },
+    "exit_code": { "type": ["integer", "null"] },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "cost": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Best-effort cost/usage; null if the executor does not report it.",
+      "properties": {
+        "input_tokens": { "type": ["integer", "null"], "minimum": 0 },
+        "output_tokens": { "type": ["integer", "null"], "minimum": 0 },
+        "usd_cents": { "type": ["integer", "null"] }
+      }
+    },
+    "result_summary": { "type": ["string", "null"] },
+    "result_pointer": {
+      "type": ["string", "null"],
+      "description": "Where the result lives, e.g. mnemos://<container>/<memory_id>, s3://..., file:///..., or a repo/branch ref."
+    },
+    "acceptance_criteria_evaluated": { "type": ["boolean", "null"] },
+    "acceptance_criteria_passed": { "type": ["boolean", "null"] },
+    "reviewer_critique": { "type": ["string", "null"] },
+    "error": { "type": ["string", "null"], "description": "Free-form error when outcome ∈ {failed, timed_out}." },
+    "dispatch": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Optional. Present for surface-originated work (pocket-agent, PLO, fleet-terminal, hermes). Absorbs the pocket-agent dispatch fields so a single receipt shape flows everywhere; never the receipt bus for conversation turns (those go to Mnemos only).",
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["pocket-agent", "personal-life-os", "fleet-terminal", "hermes", "cron", "manual"]
+        },
+        "intent": { "type": ["string", "null"], "enum": ["task", "calendar", "save", "decision", null] },
+        "response_mode": { "type": ["string", "null"], "enum": ["async-orchestrated", "direct", "planning", null] },
+        "project_scope": { "type": ["string", "null"] },
+        "memory_scope": { "type": ["string", "null"], "description": "Mnemos container_tag." }
+      }
+    }
+  }
+}

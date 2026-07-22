@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/synthesis-request.v0.json",
+  "title": "Cortex SynthesisRequest (DRAFT v0)",
+  "description": "Canonical wire shape for POST /synthesize on mnemos. The recall-summarization seam: a producer asks mnemos to recall the top-K memories matching a query and emit a structured synthesis (facts list + confidence). Mirrors the historical main.py:SynthesisRequest BaseModel but is the SINGLE source of truth per ADR-0014; main.py imports and re-types it. The keystone is `additionalProperties:false` — without it a producer could inject rogue fields (e.g. undeclared `confidence` overrides that mask the stub's hard-coded 'medium', hidden `limit` to exfiltrate the full corpus, or `debug_dump` flags that bypass the synthesis envelope). The legacy handler at main.py:463–469 currently fakes `confidence:'medium'` (the SCRUTINY §B5 / §4.1 link 3 named gap); this contract pins the INPUT shape but the RESPONSE shape (`{query, container_tag, synthesis_type, facts, memory_count, confidence}`) is server-stamped and is NOT validated on input. `synthesis_type` is intentionally NOT an enum — the legacy Pydantic posture is a free-form string with default 'structured_truth' (so a future producer can send 'executive_summary' / 'narrative' / 'decision_brief' without a schema bump; the handler is responsible for any behavior switch on this field). `container_tag` mirrors the legacy default 'hermes' (note: NOT 'hermes-pending' as on /store — the synthesis endpoint is read-shaped and operates on a stable alias; the server still normalizes via normalize_container_tag()). `query` is required + minLength:1 (empty queries would let a producer probe the full corpus silently). Status: DRAFT; bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["query"],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The recall query. Non-empty. The handler runs a top-20 recall on the container and synthesizes the top-10 facts from the result set. Empty queries are rejected (would let a producer probe the full container silently)."
+    },
+    "container_tag": {
+      "type": "string",
+      "default": "hermes",
+      "description": "Container to recall from. Alias or canonical. Server normalizes via normalize_container_tag(). Defaults to 'hermes' (the legacy Pydantic posture; NOT 'hermes-pending' as on /store — the synthesis endpoint is read-shaped). Empty string is allowed on the wire (server normalizes to default)."
+    },
+    "synthesis_type": {
+      "type": "string",
+      "default": "structured_truth",
+      "minLength": 1,
+      "description": "Synthesis mode hint. Free-form string (NOT an enum) so future producers can send 'executive_summary' / 'narrative' / 'decision_brief' without a schema bump. Default 'structured_truth' matches the legacy Pydantic posture. The handler is responsible for any behavior switch on this field; the keystone pins the SHAPE only."
+    }
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/task-envelope.json",
+  "title": "Cortex Task Envelope",
+  "description": "The universal task contract (canonical home: cortex/contracts/, per ADR-0014). Every task — regardless of executing agent — is one of these. agent-fabric imports this; adapters translate it into whatever each agent expects. Nothing downstream invents its own shape. (ADR-0023: the in-process engine supersedes the retired n8n spine.)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "project", "source", "title", "capability", "prompt", "status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Stable id; adapters must be idempotent against it."
+    },
+    "project": {
+      "type": "string",
+      "description": "Coarse routing label; maps to a Mnemos container root and is carried through decomposition.",
+      "enum": ["cortex", "agent-fabric", "mnemos", "forge", "surfaces", "personal-life-os", "pocket-agent", "fleet-terminal", "maestro", "nightcrew", "life-os"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Originating surface; clarifications route back here.",
+      "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"]
+    },
+    "title": { "type": "string", "minLength": 1, "description": "short human label" },
+    "capability": {
+      "type": "string",
+      "enum": ["code", "research", "write", "refactor", "review", "data", "ops", "chat"]
+    },
+    "prompt": { "type": "string", "minLength": 1, "description": "full instruction for the executing agent" },
+    "context_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "e.g. mnemos://..., repo://..., file://..."
+    },
+    "preferred_agent": {
+      "type": "string",
+      "enum": ["auto", "claude-code", "codex", "cursor", "kimi", "openclaw", "hermes-local"],
+      "default": "auto"
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "max_runtime_s": { "type": "integer", "minimum": 1, "default": 600 },
+        "needs_human_approval": { "type": "boolean", "default": false }
+      },
+      "default": {}
+    },
+    "status": {
+      "type": "string",
+      "description": "Consolidated ≤8-state lifecycle (2026-06-10). Two pure substates were folded: the former 'dispatched' is 'running' with started_at unset (claimed-but-not-started); the former 'needs_review' is 'reviewing' with review.needs_human=true (human escalation, not auto-grader).",
+      "enum": ["refining", "clarifying", "blocked", "queued", "running", "reviewing", "done", "failed"],
+      "default": "refining"
+    },
+    "refined_prompt": { "type": ["string", "null"], "default": null, "description": "punched-up spec written by cortex.refine.punchup" },
+    "acceptance_criteria": { "type": "array", "items": { "type": "string" }, "default": [], "description": "checkable done-conditions the grader scores against (must include a verification method)" },
+    "complexity": { "type": ["string", "null"], "enum": ["trivial", "simple", "standard", "complex", null], "default": null },
+    "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "default": null },
+    "model": { "type": ["string", "null"], "default": null, "description": "Maestro's executor model pick" },
+    "clarification": {
+      "type": ["object", "null"],
+      "default": null,
+      "properties": { "question": { "type": "string" }, "answer": { "type": ["string", "null"] } }
+    },
+    "review": {
+      "type": ["object", "null"],
+      "default": null,
+      "description": "Grader output. needs_human=true marks the escalation that was formerly the 'needs_review' status (retries/grade exhausted -> a human, not the auto-grader); review_outcome records why the task is in 'reviewing'.",
+      "properties": {
+        "score": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "critique": { "type": "string" },
+        "needs_human": { "type": "boolean", "default": false },
+        "review_outcome": { "type": "string", "enum": ["auto_grade", "retries_exhausted", "grade_failed"] }
+      }
+    },
+    "parent_id": { "type": ["string", "null"], "format": "uuid", "default": null },
+    "assigned_agent": {
+      "type": ["string", "null"],
+      "description": "Universal superset; agent-fabric executor supports a subset (openclaw|hermes|codex|claude). Adapters own the name mapping.",
+      "enum": ["claude-code", "codex", "cursor", "kimi", "openclaw", "hermes-local", null],
+      "default": null
+    },
+    "node": { "type": ["string", "null"], "default": null, "description": "fleet node the agent-fabric worker runs on" },
+    "attempts": { "type": "integer", "minimum": 0, "default": 0 },
+    "result": { "type": ["object", "string", "null"], "default": null },
+    "error": { "type": ["string", "null"], "default": null },
+    "workflowId": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "default": null,
+      "description": "Dynamic-workflow-engine extension (agent-fabric src/workflows/). Set when this envelope is a node in a runtime-authored workflow DAG; null for plain spine tasks. Join key for per-workflow receipts/checkpoints."
+    },
+    "nodeId": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Dynamic-workflow-engine extension. The DAG node id (workflow-definition node) this envelope executes. Null outside the engine."
+    },
+    "context": {
+      "type": ["object", "null"],
+      "default": null,
+      "additionalProperties": false,
+      "description": "Dynamic-workflow-engine extension. Per-node isolation pointer: the worktree path, the session-store session id, and the most recent checkpoint for resume.",
+      "properties": {
+        "workTreePath": { "type": "string", "description": "Isolated filesystem root for this node (AF_WORKSPACE_ROOT/{workflowId}/{nodeId})." },
+        "sessionId": { "type": "string", "description": "Session-store session id (interim sqlite | mnemos backend)." },
+        "checkpoint": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "description": "Resume point for this node; null until the first checkpoint is saved.",
+          "properties": {
+            "lastNode": { "type": "string" },
+            "state": { "type": "object" },
+            "savedAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    },
+    "routing": {
+      "type": ["object", "null"],
+      "default": null,
+      "additionalProperties": false,
+      "description": "Dynamic-workflow-engine extension (delta 6, explainable routing). The model-router decision for this node, mirrored into the ExecutionReceipt so GET /receipts/:id shows why a model was chosen. decision_id joins to a Maestro RouteDecision when consumed.",
+      "properties": {
+        "model": { "type": "string", "description": "Final executor model id (registry-pinned)." },
+        "provider": { "type": "string", "description": "Transport/provider the model ran on (claude|codex|kimi|minimax|api|local)." },
+        "reason": { "type": "string", "description": "Human-readable why (task class → model rule, or fallback trigger)." },
+        "fallbackChain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Ordered registry model ids the router would fall through on failure."
+        },
+        "decision_id": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Maestro RouteDecision.decision_id when the model call was routed through Maestro; null otherwise. Carried to the receipt for the explainability join."
+        }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

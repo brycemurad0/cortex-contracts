@@ -1,0 +1,4 @@
+{
+  "//": "The root cortex/contracts package.json declares \"type\":\"module\" for @cortex/contracts (index.mjs is the ESM entry). The hermetic round-trip test suite here is CommonJS (require/module.exports). This nested package.json scopes the tests/ directory back to CommonJS so `node tests/run-all-tests.js` keeps working unchanged; it is test-tooling only and is NOT shipped in the npm tarball (excluded by the root \"files\" allowlist) or the wheel.",
+  "type": "commonjs"
+}

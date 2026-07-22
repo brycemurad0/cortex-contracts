@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/training-data-candidate.v0.json",
+  "title": "Cortex TrainingDataCandidate (DRAFT v0)",
+  "description": "A normalized example for a forge lane. Represents a curated example ready for inclusion in a training dataset for a specific forge lane. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lane",
+    "prompt",
+    "response",
+    "source_url",
+    "source_commit_sha",
+    "grounded",
+    "license",
+    "quality_score",
+    "created_at"
+  ],
+  "properties": {
+    "lane": {
+      "type": "string",
+      "enum": [
+        "code-generation",
+        "code-review",
+        "refactoring",
+        "documentation",
+        "test-generation",
+        "bug-fix",
+        "architecture",
+        "general"
+      ],
+      "description": "The forge lane this example is intended for."
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The input prompt or instruction."
+    },
+    "response": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The expected/correct response."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the source of this example (repo, issue, PR, etc.)."
+    },
+    "source_commit_sha": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Git commit SHA when this example was harvested."
+    },
+    "grounded": {
+      "type": "boolean",
+      "description": "Whether this example is grounded in verified/correct information."
+    },
+    "license": {
+      "type": "string",
+      "enum": [
+        "MIT",
+        "Apache-2.0",
+        "BSD-3-Clause",
+        "GPL-3.0",
+        "proprietary",
+        "unknown",
+        "CC0-1.0",
+        "CC-BY-4.0"
+      ],
+      "description": "License of the source material."
+    },
+    "quality_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Quality score assigned by the harvester (0-100)."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this candidate was created (ISO-8601 UTC)."
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/health-status.json",
+  "title": "Cortex Box Health Status",
+  "description": "The single normative GET /health response shape for every Cortex pillar box (BOX-STANDARD §3 / PRD WS-CTX-4 / ledger D6). Required fields: status, box, version, contracts_version, deploy_parity, siblings, checked_at. Extensions live under extra. Health is the one unauthenticated endpoint; D7 fail-closed applies to everything else. Status: DRAFT v0 — ships with contracts-v0.2.0; bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "box",
+    "version",
+    "contracts_version",
+    "deploy_parity",
+    "siblings",
+    "checked_at"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ok", "degraded", "error"],
+      "description": "Aggregate box health. Sibling unreachable ⇒ degraded (never a 5xx from /health itself). error = the box itself cannot serve its primary job."
+    },
+    "box": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Canonical box name: cortex | mnemos | maestro | agent-fabric | surfaces | forge."
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Semver (or honest build identifier) of the running box process."
+    },
+    "contracts_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The consumed @cortex/contracts / cortex-contracts release version (e.g. 0.2.0). Advertised so fleet monitors can detect contract-version skew."
+    },
+    "deploy_parity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["running_sha", "release_tag", "match"],
+      "properties": {
+        "running_sha": {
+          "type": ["string", "null"],
+          "description": "Git SHA the running process baked at boot (null if unknown)."
+        },
+        "release_tag": {
+          "type": ["string", "null"],
+          "description": "Release tag baked at build time when available (null for host-native / untagged)."
+        },
+        "match": {
+          "type": ["boolean", "null"],
+          "description": "true when running_sha is a clean checkout of current HEAD; null when unknowable."
+        }
+      }
+    },
+    "siblings": {
+      "type": "array",
+      "description": "ADR-0018 degrade-not-fail: named sibling boxes this process depends on, with reachability and which features degrade when unreachable.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "reachable", "relationship", "degraded_features"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reachable": {
+            "type": "boolean"
+          },
+          "relationship": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why this sibling matters to this box (e.g. dispatch, memory, routing)."
+          },
+          "degraded_features": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Features of THIS box that degrade when the sibling is unreachable."
+          }
+        }
+      }
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of this health check."
+    },
+    "extra": {
+      "type": "object",
+      "description": "Box-specific extensions (relay state, queue depth, etc.). Must not redefine required fields."
+    }
+  }
+}

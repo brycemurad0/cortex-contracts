@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/verification-evidence.v0.json",
+  "title": "Cortex VerificationEvidence (DRAFT v0)",
+  "description": "Grader output for a completed task. Captures structured grading results including individual check results and evidence artifacts. Per ADR-0014, authored once in cortex/contracts/ and imported by every consumer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "checks",
+    "status",
+    "artifacts",
+    "grader",
+    "graded_at"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the ExecutionReceipt being graded."
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "status"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable description of what was checked."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pass", "fail", "skip"],
+            "description": "The status of this individual check."
+          },
+          "details": {
+            "type": ["string", "null"],
+            "description": "Optional details or explanation of the result."
+          }
+        }
+      },
+      "description": "Individual check results."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pass", "fail"],
+      "description": "Overall pass/fail status."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "reference"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Type of artifact (e.g., 'log', 'screenshot', 'diff', 'metric')."
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Reference to the artifact (URL, path, or identifier)."
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Optional description of the artifact."
+          }
+        }
+      },
+      "description": "Evidence artifacts supporting the grading decision."
+    },
+    "grader": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identity of the grader (agent or system)."
+    },
+    "graded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the grading was completed (ISO-8601 UTC)."
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/session-promote-on-close-request.v0.json",
+  "title": "Cortex SessionPromoteOnCloseRequest (DRAFT v0)",
+  "description": "Canonical wire shape for POST /sessions/{session_id}/promote-on-close on mnemos. The session-run-lifecycle keystone: a Maestro run opens a Mnemos session at start and `promote-on-close` with the attestor = run id. Mirrors the historical main.py:PromoteOnCloseRequest BaseModel but is the SINGLE source of truth per ADR-0014; main.py imports and re-types it. The keystone is `additionalProperties:false` — without it a producer could inject rogue fields (e.g. undeclared provenance metadata, hidden attestor overrides) that consumers would silently pick up. All fields are optional on the wire (defaults are server-side); the keystone declares them as nullable where the legacy Pydantic posture allows None, so the keystone's first pass is shape-only and the handler's second pass enforces the business rules (attestor required for non-empty promote lists, to_container must resolve to a container, etc.). The `promote_memory_ids` items are ULID-shaped server-side strings (no schema constraint to keep the wire format-agnostic — the schema only checks `type:string` and `minLength:1`). Status: DRAFT; bump $id on breaking changes. Note: this is the WRITE shape for the session-close ritual; the server's response carries additional server-stamped fields (promoted_ids, swept_ids, to_container) that are NEVER accepted on input.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "promote_memory_ids": {
+      "type": ["array", "null"],
+      "default": null,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "List of session memory_ids to promote to the durable parent container. None or [] = promote nothing (sweep all unpromoted memories on close). Server-side sweeps (tombstones) the unpromoted remainder."
+    },
+    "to_container": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Target protected-root container for the promoted memories. None = default to the session's parent scope (per db.close_session). Server normalizes via normalize_container_tag()."
+    },
+    "attestor": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "WHO is attesting this session close is a reviewed ritual (e.g. 'mvs_<run-id>' for a Maestro run). Required at the handler level (400 if absent AND promote_memory_ids is non-empty) but optional on the wire so the keystone can emit a clean 'attestor required for non-empty promote' message before the handler's own check."
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Free-form WHY this session is being closed. Recorded in the audit log alongside the attestation_id. Optional but encouraged."
+    }
+  }
+}

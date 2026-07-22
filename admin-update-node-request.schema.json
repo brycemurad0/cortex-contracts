@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.this.live/cortex/admin-update-node-request.v0.json",
+  "title": "Cortex AdminUpdateNodeRequest (DRAFT v0)",
+  "description": "Canonical wire shape for POST /admin/update-node on mnemos. The fleet-node heartbeat write seam: a health-check cron or operator posts the current status + last_heartbeat for a fleet node, and mnemos updates the `fleet_nodes` row. Mirrors the historical main.py:UpdateNodeRequest BaseModel but is the SINGLE source of truth per ADR-0014; main.py imports and re-types it. The keystone is `additionalProperties:false` — without it a producer could inject rogue fields (e.g. undeclared `last_heartbeat` to spoof a healthy liveness when the node is actually down, a hidden `token_override` to bypass the `require_token` dependency on a future rewire, a `force_offline` flag that would silently reclassify a live node). The legacy Pydantic posture typed all 3 fields as nullable except `node_id` (which is required + minLength:1); the canonical schema preserves that posture. `status` defaults to 'online' on the wire (the server-side default matches the legacy Pydantic posture; a producer that sends `{}` is rejected because `node_id` is required, but a producer that sends `{'node_id': 'node-1'}` is accepted with `status` server-defaulted to 'online'). `notes` is an operator-typed free-text annotation; nullable, default null (empty string is allowed on the wire and is normalized to null by the handler). Status: DRAFT; bump $id on breaking changes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["node_id"],
+  "properties": {
+    "node_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The fleet node identifier. Required + non-empty. The handler runs `UPDATE fleet_nodes SET status=?, last_heartbeat=? WHERE node_id=?` — a missing or empty `node_id` would either no-op silently (the WHERE clause matches nothing) or, worse, be filled with a server-side default that overwrites the first row."
+    },
+    "status": {
+      "type": "string",
+      "default": "online",
+      "minLength": 1,
+      "description": "The current status of the fleet node. Free-form string (NOT an enum) so future producer/consumer evolution (e.g. 'degraded', 'draining', 'rebooting') does not require a schema bump. Default 'online' matches the legacy Pydantic posture. The handler writes the value verbatim into the `status` column; semantic interpretation is a downstream concern (the operator's fleet_health dashboard maps the string to a UI state)."
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Free-text operator annotation. Nullable. Default null. The legacy Pydantic posture typed it as Optional[str] = None. An empty string on the wire is accepted (the keystone pins SHAPE only; the handler normalizes empty-string to null if it chooses)."
+    }
+  }
+}
