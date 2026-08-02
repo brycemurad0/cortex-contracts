@@ -2,15 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://schemas.this.live/cortex/task-enqueue-request.v0.json",
   "title": "Cortex TaskEnqueueRequest (DRAFT v0)",
-  "description": "The canonical task-enqueue payload a surface (personal-life-os / pocket-agent / fleet-terminal / desktop) POSTs to agent-fabric's POST /cortex/enqueue (Suite Link §4.1). This is the single stable intake URL for surfaces. agent-fabric validates this shape, builds a conforming cortex/contracts TaskEnvelope from it (minting the id), returns a dispatch_id immediately, and runs the task in-process on the dynamic workflow engine (runWorkflow / runComplexWorkflowAsync; per ADR-0023 the engine supersedes the n8n spine). Per ADR-0014 the shape is authored once here and imported by every consumer; agent-fabric NEVER redefines it. Status: DRAFT v0; v0->v1 gated on a real end-to-end round-trip through the in-process engine (enqueue -> engine -> receipt). Bump $id on breaking changes.",
+  "description": "The canonical task-enqueue payload any Surface or harness POSTs to agent-fabric's POST /v1/intents (with /cortex/enqueue retained as a compatibility route). agent-fabric validates this shape, mints the task/intent/session identifiers, preserves home-conversation lineage, returns a durable binding immediately, and runs the task in-process on the dynamic workflow engine. Per ADR-0014 the shape is authored once here and imported by every consumer; agent-fabric NEVER redefines it. Status: DRAFT v0; v0->v1 is gated on a real end-to-end home-conversation -> child -> verified receipt round-trip. Bump $id on breaking changes.",
   "type": "object",
   "additionalProperties": false,
   "required": ["source", "title", "description", "project", "tier"],
   "properties": {
     "source": {
       "type": "string",
-      "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"],
-      "description": "Originating surface. Lifts the TaskEnvelope.source / WorkRequestSource enum verbatim; NOT redefined. Clarifications route back here and it scopes the Mnemos container."
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+      "description": "Originating surface or harness identifier. Clarifications route back here. This is deliberately an open, validated identifier so new providers do not require a contract release."
     },
     "title": {
       "type": "string",
@@ -26,8 +28,10 @@
     },
     "project": {
       "type": "string",
-      "enum": ["cortex", "agent-fabric", "mnemos", "forge", "surfaces", "personal-life-os", "pocket-agent", "fleet-terminal", "maestro", "nightcrew", "life-os"],
-      "description": "Coarse routing label. Lifts the TaskEnvelope.project enum verbatim; maps to a Mnemos container root and is carried through decomposition."
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$",
+      "description": "Project routing identifier, including dynamically discovered projects such as crest. Maps to a project manifest and Mnemos container root and is carried through decomposition."
     },
     "tier": {
       "type": "string",
@@ -62,6 +66,76 @@
       "type": ["string", "null"],
       "default": null,
       "description": "Optional client-generated idempotency key, stable across retries. When set, agent-fabric SHOULD dedupe; when null the server mints the TaskEnvelope.id and dispatch_id fresh."
+    },
+    "root_conversation_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 200,
+      "default": null,
+      "description": "Stable identifier for the supervising home conversation. Every child spawned from that conversation preserves this value."
+    },
+    "parent_session_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 200,
+      "default": null,
+      "description": "Immediate parent session identifier. For a root request this is normally the home-conversation session."
+    },
+    "parent_task_id": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 200,
+      "default": null,
+      "description": "Immediate parent task identifier when this intent is a decomposed child."
+    },
+    "memory_scope": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+      "default": null,
+      "description": "Canonical Mnemos container scope. Authorization is still enforced server-side; this is a routing claim, not an access grant."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "type": "string", "minLength": 1, "maxLength": 1000 },
+      "default": [],
+      "description": "Checkable completion conditions that an independent verifier evaluates before the task can be reported complete."
+    },
+    "artifact_refs": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2048 },
+      "default": [],
+      "description": "Existing artifacts or output destinations that must remain joined to this task."
+    },
+    "budget": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "default": null,
+      "properties": {
+        "max_runtime_s": { "type": "integer", "minimum": 1 },
+        "max_attempts": { "type": "integer", "minimum": 1 },
+        "max_input_tokens": { "type": "integer", "minimum": 0 },
+        "max_output_tokens": { "type": "integer", "minimum": 0 },
+        "max_total_tokens": { "type": "integer", "minimum": 0 },
+        "max_usd_cents": { "type": "integer", "minimum": 0 }
+      },
+      "description": "Owner- or project-bounded inner execution budget. It may narrow but never expand the active policy's hard outer limits."
+    },
+    "policy_version": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 100,
+      "default": null,
+      "description": "Human-readable constitution/policy version active when the intent was accepted."
+    },
+    "policy_hash": {
+      "type": ["string", "null"],
+      "pattern": "^[a-fA-F0-9]{64}$",
+      "default": null,
+      "description": "SHA-256 digest of the active machine-readable policy manifest."
     },
     "judge_alias": {
       "type": "string",

@@ -60,6 +60,15 @@ export interface ExecutionReceipt {
   af_worker_session_id?: string | null;
   /** Joins with RouteDecision.decision_id when routed through Maestro; else null. */
   decision_id?: string | null;
+  /** Supervisory home-conversation lineage. */
+  root_conversation_id?: string | null;
+  parent_session_id?: string | null;
+  parent_task_id?: string | null;
+  /** Canonical Mnemos scope used for the result. */
+  memory_scope?: string | null;
+  /** Second-brain policy identity applied to this execution. */
+  policy_version?: string | null;
+  policy_hash?: string | null;
 
   /** Where this ran. */
   node: string;
@@ -78,6 +87,7 @@ export interface ExecutionReceipt {
   /** Output. Either inline (small) or a pointer (large/structured). */
   result_summary?: string | null;
   result_pointer?: string | null; // e.g. "mnemos://<container>/<memory_id>", "s3://...", "file:///..."
+  artifact_refs?: string[];
 
   /** For graders / training candidates. */
   acceptance_criteria_evaluated?: boolean | null;

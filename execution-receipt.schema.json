@@ -37,6 +37,12 @@
       "type": ["string", "null"],
       "description": "Joins with RouteDecision.decision_id when the model call was routed through Maestro. Null otherwise."
     },
+    "root_conversation_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
+    "parent_session_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
+    "parent_task_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
+    "memory_scope": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 },
+    "policy_version": { "type": ["string", "null"], "minLength": 1, "maxLength": 100, "default": null },
+    "policy_hash": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$", "default": null },
     "node": { "type": "string", "minLength": 1, "description": "Where this ran (fleet node id)." },
     "assigned_agent": { "type": "string", "minLength": 1, "description": "Matches TaskEnvelope.assigned_agent." },
     "outcome": {
@@ -61,6 +67,12 @@
     "result_pointer": {
       "type": ["string", "null"],
       "description": "Where the result lives, e.g. mnemos://<container>/<memory_id>, s3://..., file:///..., or a repo/branch ref."
+    },
+    "artifact_refs": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2048 },
+      "default": []
     },
     "acceptance_criteria_evaluated": { "type": ["boolean", "null"] },
     "acceptance_criteria_passed": { "type": ["boolean", "null"] },

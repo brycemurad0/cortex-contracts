@@ -1,24 +1,35 @@
 # Cortex Contracts
 
-This is the public, MIT-licensed distribution of the shared Cortex JSON Schema
-contracts. Contracts are authored and reviewed in the canonical `cortex`
-repository, then exported here as an exact, provenance-stamped release so every
-box can install them without a private sibling checkout or a cross-repository
-credential.
+This repository is the public, MIT-licensed distribution projection of the
+shared Cortex contracts. They are authored and reviewed in the canonical
+[`brycemurad0/cortex`](https://github.com/brycemurad0/cortex/tree/091cd2532f8f462b68fd986fdbcbc444dbdb44c2/contracts)
+repository, then exported here so every consumer can install an immutable
+release without a private credential or sibling checkout. This projection is
+not a second contract authority.
 
-Install immutable v0.2.0 assets:
+The package is versioned **0.3.0**. Install it only after the corresponding
+`contracts-v0.3.0` GitHub release is present; a source branch, tag without
+assets, or locally built archive is not a consumer release. Verify the release
+assets against the attached `SHA256SUMS`:
 
 ```sh
-npm install https://github.com/brycemurad0/cortex-contracts/releases/download/contracts-v0.2.0/cortex-contracts-0.2.0.tgz
-pip install https://github.com/brycemurad0/cortex-contracts/releases/download/contracts-v0.2.0/cortex_contracts-0.2.0-py3-none-any.whl
+VERSION=0.3.0
+BASE="https://github.com/brycemurad0/cortex-contracts/releases/download/contracts-v${VERSION}"
+mkdir "cortex-contracts-${VERSION}" && cd "cortex-contracts-${VERSION}"
+curl -fLO "${BASE}/cortex-contracts-${VERSION}.tgz"
+curl -fLO "${BASE}/cortex_contracts-${VERSION}-py3-none-any.whl"
+curl -fLO "${BASE}/SHA256SUMS"
+shasum -a 256 -c SHA256SUMS
+npm install "./cortex-contracts-${VERSION}.tgz"
+pip install "./cortex_contracts-${VERSION}-py3-none-any.whl"
 ```
 
-Schema identifiers use `https://schemas.this.live/cortex/`. Historical
-`https://cortex.dev/schemas/` identifiers remain loader aliases only.
-
-See [`PROVENANCE.md`](PROVENANCE.md) for the canonical source commit and
-release verification. No consumer should redefine a canonical shape or depend
-on a sibling checkout.
+The release-attached checksum manifest is the integrity authority. Checksums
+are intentionally not embedded in this README because this file is packed into
+the npm tarball and Python wheel; embedding an enclosing artifact's digest in
+its own bytes would be circular. [`PROVENANCE.md`](PROVENANCE.md) records the
+exact canonical Cortex source commit. Contract changes are reviewed in Cortex
+first, then exported and released from this public projection.
 
 ## Ratified
 
@@ -34,7 +45,7 @@ in `agent-fabric/orchestration/db/migrations/`.
 
 ## Forge-owned (imported by Maestro + spine)
 
-Per Cortex ADR-0019 §1-2, Forge
+Per [ADR-0019](https://github.com/brycemurad0/cortex/blob/091cd2532f8f462b68fd986fdbcbc444dbdb44c2/docs/decisions/ADR-0019-discipline-registry-owned-by-forge.md) §1-2, Forge
 owns the discipline/domain registry. The schema lives in the Forge repo; Maestro and
 Agent Fabric import it. **Cortex does not author or re-home it** — this README is the
 one-line registration pointer. The lane (discipline) is the canonical routing axis
@@ -65,7 +76,7 @@ moved here 2026-06-11 to make this table match disk reality.
 | **TrainingDataCandidate** | `training-data-candidate.ts`, `training-data-candidate.schema.json` | `tests/training-data-candidate.test.js` (8) | The Forge label-harvest candidate row. |
 | **NightCrewWorkPack** | `nightcrew-work-pack.ts`, `nightcrew-work-pack.schema.json` | `tests/nightcrew-work-pack.test.js` (7) | The NightCrew background read-only loop work unit (ADR-0010). |
 | **RefinePunchupRequest / Response** | `refine-punchup-request.{ts,schema.json}`, `refine-punchup-response.{ts,schema.json}` | `tests/refine-punchup.test.js` (14) | The `cortex.refine.punchup` surface→spine punch-up call (W2 P0 lane). Consumed (not redefined) by surfaces `punchup-spine.mjs`. |
-| **TaskEnqueueRequest** | `task-enqueue-request.ts`, `task-enqueue-request.schema.json` | `tests/task-enqueue-request.test.js` (9) | The surface→agent-fabric intake shape (Suite Link §4.1) consumed by `POST /cortex/enqueue`. Added 2026-06-10 (AF-WS6). |
+| **TaskEnqueueRequest** | `task-enqueue-request.ts`, `task-enqueue-request.schema.json` | `tests/task-enqueue-request.test.js` (15) | The surface→agent-fabric intake shape (Suite Link §4.1) consumed by canonical `POST /v1/intents` and compatibility `POST /cortex/enqueue`. Added 2026-06-10 (AF-WS6); widened in 0.3.0 for supervisory lineage, scoped memory, dynamic projects, budgets, artifacts, and policy attestation. |
 | **TrainingLabel** | `training-label.ts`, `training-label.schema.json` | `tests/training-label.test.js` (17) | The raw `quality_labels` row the flywheel writes and Forge's harvest reads, with optional `provenance` so a grounded label survives Forge's curate gate. Added 2026-06-22 (ADR-0025). |
 | **CortexModelRegistration** | `cortex-model-registration.ts`, `cortex-model-registration.schema.json` | `tests/cortex-model-registration.test.js` (15) | The Forge→Maestro egress: register a served, eval-beating adapter so Maestro routes it local-first (`POST /v1/models/register`). Added 2026-06-22 (ADR-0025). |
 
@@ -108,7 +119,7 @@ MorningBrief.
   identifiers, loader compatibility, and release cleanliness; run it with
   `npm test` from `contracts/`.
 - The `$id` carries an explicit version suffix (`<name>.vN.json`); breaking changes bump the major
-  and require a new ADR or explicit amendment. Cortex ADR-0022
+  and require a new ADR or explicit amendment. See **[ADR-0022](https://github.com/brycemurad0/cortex/blob/091cd2532f8f462b68fd986fdbcbc444dbdb44c2/docs/decisions/ADR-0022-task-envelope-id-versioning.md)**
   (TaskEnvelope `$id` versioning) for the rule and the one historical exception (TaskEnvelope's
   unsuffixed `$id`, treated as `v1` pending the next breaking change).
 - Reconciliation deltas between this canon and downstream code are recorded as comments in the

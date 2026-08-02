@@ -31,6 +31,23 @@ const validRequests = [
     idempotency_key: "01HV8J3K2M4N5P6Q7R8S9T0UV"
   },
   {
+    source: "surfaces/voice",
+    title: "Supervise three Crest workstreams",
+    description: "Create three auditable children and synthesize verified results into the parent.",
+    project: "crest",
+    tier: "complex",
+    idempotency_key: "voice-home-001",
+    root_conversation_id: "home-2026-08-01",
+    parent_session_id: "surface-session-001",
+    parent_task_id: null,
+    memory_scope: "thislive/crest/pilot",
+    acceptance_criteria: ["Three children have terminal receipts", "Parent receives one synthesis"],
+    artifact_refs: ["repo:///Users/jarvis/crest"],
+    budget: { max_runtime_s: 1800, max_attempts: 3, max_total_tokens: 200000, max_usd_cents: 0 },
+    policy_version: "2026-08-01.1",
+    policy_hash: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
     // Optional nullable fields explicitly null (must be accepted).
     source: "fleet-terminal",
     title: "Summarize last week's receipts",
@@ -53,7 +70,7 @@ const invalidRequests = [
   },
   {
     // Invalid source enum.
-    source: "slack", // invalid
+    source: "invalid source", // invalid identifier
     title: "x",
     description: "y",
     project: "cortex",
@@ -64,7 +81,7 @@ const invalidRequests = [
     source: "manual",
     title: "x",
     description: "y",
-    project: "not-a-pillar", // invalid
+    project: "not a valid project", // invalid identifier
     tier: "standard"
   },
   {
@@ -92,6 +109,14 @@ const invalidRequests = [
     project: "cortex",
     tier: "standard",
     assigned_agent: "gemini-cli" // invalid
+  },
+  {
+    source: "surfaces/voice",
+    title: "x",
+    description: "y",
+    project: "crest",
+    tier: "standard",
+    policy_hash: "not-a-sha256"
   }
 ];
 
@@ -137,8 +162,8 @@ const descChecks = [
     /in-process/.test(desc) && /dynamic workflow engine/.test(desc)],
   ["does not say AF forwards into the n8n spine intake",
     !/forwards into the n8n spine/.test(desc)],
-  ["v0->v1 gate is the in-process engine round-trip",
-    /round-trip through the in-process engine/.test(desc)],
+  ["v0->v1 gate is the supervisory child-to-receipt round-trip",
+    /home-conversation/.test(desc) && /verified receipt round-trip/.test(desc)],
   ["v0->v1 gate no longer references NAS :5678",
     !/NAS :5678/.test(desc)]
 ];

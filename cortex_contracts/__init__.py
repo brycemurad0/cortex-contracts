@@ -27,7 +27,7 @@ import os
 from pathlib import Path
 from typing import Dict
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "contracts_dir",

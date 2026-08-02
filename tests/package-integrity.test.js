@@ -34,7 +34,7 @@ async function main() {
   const pythonLoader = fs.readFileSync(path.join(ROOT, 'cortex_contracts', '__init__.py'), 'utf8');
   const jsLoader = await import(pathToFileURL(path.join(ROOT, 'index.mjs')).href);
 
-  check('npm package version is 0.2.0', packageJson.version === '0.2.0');
+  check('npm package version is 0.3.0', packageJson.version === '0.3.0');
   check('JavaScript loader exports package version', jsLoader.version === packageJson.version);
   check('Python package version matches', pyproject.includes(`version = "${packageJson.version}"`) && pythonLoader.includes(`__version__ = "${packageJson.version}"`));
   check('npm package is MIT licensed', packageJson.license === 'MIT');

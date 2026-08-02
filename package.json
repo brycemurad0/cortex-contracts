@@ -1,6 +1,6 @@
 {
   "name": "@cortex/contracts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Canonical Cortex shared JSON Schema contracts (ADR-0014) as an installable, versioned package. Ships the schemas as package data plus loaders (schemasDir/getSchema/allSchemas) so every pillar depends on a pinned version instead of a relative parents[N]/cortex/contracts path.",
   "type": "module",
   "main": "./index.mjs",
@@ -35,11 +35,6 @@
     "schemas",
     "adr-0014"
   ],
-  "homepage": "https://github.com/brycemurad0/cortex-contracts",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/brycemurad0/cortex-contracts.git"
-  },
   "license": "MIT",
   "private": false
 }

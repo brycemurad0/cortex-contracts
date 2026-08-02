@@ -36,7 +36,7 @@ export const version = (() => {
     const require = createRequire(import.meta.url);
     return require("./package.json").version;
   } catch {
-    return "0.2.0";
+    return "0.3.0";
   }
 })();
 
