@@ -68,6 +68,12 @@ const spineOrchestrated = {
   af_dispatch_id: 'disp_01HX',
   af_worker_session_id: 'sess_01HX',
   decision_id: 'dec_01HX',
+  root_conversation_id: 'conversation_01HX',
+  parent_session_id: 'session_01HX',
+  parent_task_id: 'task_parent_01HX',
+  memory_scope: 'cortex/second-brain',
+  policy_version: '1.2.0',
+  policy_hash: '31b1251955590c80704cf4c78feae6ad6267bcb15dc16c728ff5d39ccd355bb9',
   node: 'jarvis',
   assigned_agent: 'claude-code',
   outcome: 'succeeded',
@@ -178,6 +184,10 @@ console.log('\nType / enum / constraint violations:');
   // unknown top-level field (additionalProperties:false)
   const r = validate({ ...minimal, bogus_field: 'nope' }, 'execution-receipt');
   check('unknown top-level field rejected (additionalProperties:false)', !r.valid);
+}
+{
+  const r = validate({ ...minimal, policy_hash: 'not-a-sha256' }, 'execution-receipt');
+  check('invalid policy_hash rejected', !r.valid);
 }
 {
   // unknown dispatch sub-field (the dispatch block is also additionalProperties:false)

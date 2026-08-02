@@ -15,7 +15,7 @@
 //   - `project` maps to a Mnemos container root (cortex/* | personal/* | ...);
 //     the enum below is the coarse routing label carried through decomposition.
 
-export type CortexProject =
+export type KnownCortexProject =
   | "cortex"
   | "agent-fabric"
   | "mnemos"
@@ -27,6 +27,8 @@ export type CortexProject =
   | "maestro"
   | "nightcrew"
   | "life-os";
+
+export type CortexProject = KnownCortexProject | (string & {});
 
 export type Complexity = "trivial" | "simple" | "standard" | "complex";
 
@@ -50,12 +52,14 @@ export type AgentName =
 
 export type PreferredAgent = "auto" | AgentName;
 
-export type TaskSource =
+export type KnownTaskSource =
   | "personal-life-os"
   | "pocket-agent"
   | "fleet-terminal"
   | "cron"
   | "manual";
+
+export type TaskSource = KnownTaskSource | (string & {});
 
 // Consolidated ≤8-state lifecycle (2026-06-10). Two pure substates were folded:
 //   - the former "dispatched" is "running" with started_at unset (claimed-but-not-started)
@@ -88,6 +92,15 @@ export interface TaskClarification {
 export interface TaskConstraints {
   max_runtime_s?: number;
   needs_human_approval?: boolean;
+}
+
+export interface TaskExecutionBudget {
+  max_runtime_s?: number;
+  max_attempts?: number;
+  max_input_tokens?: number;
+  max_output_tokens?: number;
+  max_total_tokens?: number;
+  max_usd_cents?: number;
 }
 
 // ── Dynamic-workflow-engine extensions (agent-fabric src/workflows/) ──
@@ -138,6 +151,16 @@ export interface TaskEnvelope {
 
   // ── decomposition ──
   parent_id: string | null;
+  root_conversation_id: string | null;
+  parent_session_id: string | null;
+  parent_task_id: string | null;
+
+  // ── second-brain policy, memory, evidence, and resources ──
+  memory_scope: string | null;
+  artifact_refs: string[];
+  budget: TaskExecutionBudget | null;
+  policy_version: string | null;
+  policy_hash: string | null;
 
   // ── execution ──
   assigned_agent: AgentName | null;

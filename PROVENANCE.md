@@ -3,6 +3,22 @@
 This repository is a public distribution projection, not a second contract
 authority.
 
+## 0.3.0
+
+- Canonical repository: `brycemurad0/cortex`
+- Canonical source commit: `091cd2532f8f462b68fd986fdbcbc444dbdb44c2`
+- Canonical source path: `contracts/`
+- Intended release tag: `contracts-v0.3.0`
+- Canonical release-candidate npm SHA-256:
+  `37e83f029fd7a7787cfedb8a7d3c5bb2f17166e04030901dc9576ae5763c6800`
+- Canonical release-candidate wheel SHA-256:
+  `2d433b94b3b5d5b0f5f909fa71da46e5fbdbf4afdfc1fb2304b246129f2c7885`
+
+The public release workflow rebuilds and clean-installs the projection on the
+tag. Its attached `SHA256SUMS` is the consumer integrity authority; the hashes
+above attest the independently reproducible canonical-source build used to
+prepare this projection.
+
 ## 0.2.0
 
 - Canonical repository: `brycemurad0/cortex`

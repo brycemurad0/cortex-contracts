@@ -15,12 +15,16 @@
     "project": {
       "type": "string",
       "description": "Coarse routing label; maps to a Mnemos container root and is carried through decomposition.",
-      "enum": ["cortex", "agent-fabric", "mnemos", "forge", "surfaces", "personal-life-os", "pocket-agent", "fleet-terminal", "maestro", "nightcrew", "life-os"]
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
     },
     "source": {
       "type": "string",
       "description": "Originating surface; clarifications route back here.",
-      "enum": ["personal-life-os", "pocket-agent", "fleet-terminal", "cron", "manual"]
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
     },
     "title": { "type": "string", "minLength": 1, "description": "short human label" },
     "capability": {
@@ -77,6 +81,26 @@
       }
     },
     "parent_id": { "type": ["string", "null"], "format": "uuid", "default": null },
+    "root_conversation_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200, "default": null },
+    "parent_session_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200, "default": null },
+    "parent_task_id": { "type": ["string", "null"], "minLength": 1, "maxLength": 200, "default": null },
+    "memory_scope": { "type": ["string", "null"], "minLength": 1, "maxLength": 512, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$", "default": null },
+    "artifact_refs": { "type": "array", "maxItems": 64, "items": { "type": "string", "minLength": 1, "maxLength": 2048 }, "default": [] },
+    "budget": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "default": null,
+      "properties": {
+        "max_runtime_s": { "type": "integer", "minimum": 1 },
+        "max_attempts": { "type": "integer", "minimum": 1 },
+        "max_input_tokens": { "type": "integer", "minimum": 0 },
+        "max_output_tokens": { "type": "integer", "minimum": 0 },
+        "max_total_tokens": { "type": "integer", "minimum": 0 },
+        "max_usd_cents": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "policy_version": { "type": ["string", "null"], "minLength": 1, "maxLength": 100, "default": null },
+    "policy_hash": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$", "default": null },
     "assigned_agent": {
       "type": ["string", "null"],
       "description": "Universal superset; agent-fabric executor supports a subset (openclaw|hermes|codex|claude). Adapters own the name mapping.",

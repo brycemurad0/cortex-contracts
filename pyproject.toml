@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cortex-contracts"
-version = "0.2.0"
+version = "0.3.0"
 description = "Canonical Cortex shared JSON Schema contracts (ADR-0014) as an installable, versioned wheel. Ships the same canonical *.schema.json files as package data (one source, no divergent copies) plus loaders: contracts_dir(), get_schema(), all_schemas()."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -17,7 +17,7 @@ keywords = ["cortex", "contracts", "json-schema", "schemas", "adr-0014"]
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/brycemurad0/cortex-contracts"
+Homepage = "https://github.com/brycemurad0/cortex/tree/main/contracts"
 
 # ── Packaging (hatchling) ──
 #

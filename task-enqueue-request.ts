@@ -16,15 +16,18 @@
 import type { WorkRequestPriority } from "./work-request";
 
 /** Originating surface. Lifts the TaskEnvelope.source enum verbatim. */
-export type TaskEnqueueSource =
+export type KnownTaskEnqueueSource =
   | "personal-life-os"
   | "pocket-agent"
   | "fleet-terminal"
   | "cron"
   | "manual";
 
+/** Open identifier: new Surfaces and harnesses must not require a contract release. */
+export type TaskEnqueueSource = KnownTaskEnqueueSource | (string & {});
+
 /** Coarse routing label. Lifts the TaskEnvelope.project enum verbatim. */
-export type TaskEnqueueProject =
+export type KnownTaskEnqueueProject =
   | "cortex"
   | "agent-fabric"
   | "mnemos"
@@ -36,6 +39,18 @@ export type TaskEnqueueProject =
   | "maestro"
   | "nightcrew"
   | "life-os";
+
+/** Open identifier: dynamic projects (for example crest) are first-class. */
+export type TaskEnqueueProject = KnownTaskEnqueueProject | (string & {});
+
+export interface TaskExecutionBudget {
+  max_runtime_s?: number;
+  max_attempts?: number;
+  max_input_tokens?: number;
+  max_output_tokens?: number;
+  max_total_tokens?: number;
+  max_usd_cents?: number;
+}
 
 /** Complexity tier. Mirrors RouteDecision.tier / TaskEnvelope.complexity. */
 export type TaskEnqueueTier = "trivial" | "simple" | "standard" | "complex";
@@ -80,6 +95,34 @@ export interface TaskEnqueueRequest {
 
   /** Optional client-generated idempotency key, stable across retries. */
   idempotency_key?: string | null;
+
+  /** Stable home-conversation lineage root. */
+  root_conversation_id?: string | null;
+
+  /** Immediate parent session for this intent. */
+  parent_session_id?: string | null;
+
+  /** Immediate parent task for decomposed child work. */
+  parent_task_id?: string | null;
+
+  /** Canonical Mnemos container scope (routing claim, not an access grant). */
+  memory_scope?: string | null;
+
+  /** Independently verifiable done conditions. */
+  acceptance_criteria?: string[];
+
+  /** Existing inputs or expected output destinations. */
+  artifact_refs?: string[];
+
+  /** Per-task inner budget, always bounded by active policy. */
+  budget?: TaskExecutionBudget | null;
+
+  /** Active policy identity captured at acceptance time. */
+  policy_version?: string | null;
+  policy_hash?: string | null;
+
+  /** Optional intent-punchup judge alias. */
+  judge_alias?: string;
 }
 
 /** What POST /cortex/enqueue returns immediately (before execution). */

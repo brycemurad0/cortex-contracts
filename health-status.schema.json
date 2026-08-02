@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://schemas.this.live/cortex/health-status.json",
   "title": "Cortex Box Health Status",
-  "description": "The single normative GET /health response shape for every Cortex pillar box (BOX-STANDARD §3 / PRD WS-CTX-4 / ledger D6). Required fields: status, box, version, contracts_version, deploy_parity, siblings, checked_at. Extensions live under extra. Health is the one unauthenticated endpoint; D7 fail-closed applies to everything else. Status: DRAFT v0 — ships with contracts-v0.2.0; bump $id on breaking changes.",
+  "description": "The single normative GET /health response shape for every Cortex pillar box (BOX-STANDARD §3 / PRD WS-CTX-4 / ledger D6). Required fields: status, box, version, contracts_version, deploy_parity, siblings, checked_at. Extensions live under extra. Health is the one unauthenticated endpoint; D7 fail-closed applies to everything else. Status: DRAFT v0 — introduced in contracts-v0.2.0; bump $id on breaking changes.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -33,7 +33,7 @@
     "contracts_version": {
       "type": "string",
       "minLength": 1,
-      "description": "The consumed @cortex/contracts / cortex-contracts release version (e.g. 0.2.0). Advertised so fleet monitors can detect contract-version skew."
+      "description": "The consumed @cortex/contracts / cortex-contracts release version (e.g. 0.3.0). Advertised so fleet monitors can detect contract-version skew."
     },
     "deploy_parity": {
       "type": "object",
