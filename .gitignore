@@ -12,3 +12,9 @@ dist/
 build/
 *.egg-info/
 cortex_contracts.egg-info/
+
+# Python bytecode. `python -m build`, the wheel loader, and any import of
+# cortex_contracts writes these; untracked noise in a repo whose rule is to
+# stage explicit paths is a commit waiting to sweep it in.
+__pycache__/
+*.py[cod]

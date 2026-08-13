@@ -101,6 +101,11 @@ const tests = [
   'admin-update-node-request.test.js',
   // Added 2026-07-15 (P1.contracts / WS-CTX-4): BOX-STANDARD §3 health shape.
   'health-status.test.js',
+  // Added 2026-08-13: the operands behind deploy_parity.match. Three boxes
+  // grew this object independently and disagreed on the meaning of `basis`,
+  // `complete`, and `verdict`; the test carries the cross-field semantics the
+  // schema language cannot state.
+  'parity-operands.test.js',
   // v0.2.0 release integrity replaces the old sibling-checkout path pin. A
   // release package must be testable from cortex alone: coherent JS/Python
   // versions, owned and unique schema IDs, MIT metadata, loader compatibility
