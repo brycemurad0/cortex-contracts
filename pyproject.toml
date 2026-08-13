@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cortex-contracts"
-version = "0.3.0"
+version = "0.4.0"
 description = "Canonical Cortex shared JSON Schema contracts (ADR-0014) as an installable, versioned wheel. Ships the same canonical *.schema.json files as package data (one source, no divergent copies) plus loaders: contracts_dir(), get_schema(), all_schemas()."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -34,6 +34,7 @@ packages = ["cortex_contracts"]
 "cortex-model-registration.schema.json" = "cortex_contracts/schemas/cortex-model-registration.schema.json"
 "execution-receipt.schema.json" = "cortex_contracts/schemas/execution-receipt.schema.json"
 "health-status.schema.json" = "cortex_contracts/schemas/health-status.schema.json"
+"parity-operands.schema.json" = "cortex_contracts/schemas/parity-operands.schema.json"
 "learning-trace.schema.json" = "cortex_contracts/schemas/learning-trace.schema.json"
 "memory-promote-request.schema.json" = "cortex_contracts/schemas/memory-promote-request.schema.json"
 "memory-store-request.schema.json" = "cortex_contracts/schemas/memory-store-request.schema.json"

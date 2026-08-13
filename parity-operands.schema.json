@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.this.live/cortex/parity-operands.json",
+  "title": "Cortex deploy-parity operands",
+  "description": "The two values a box compared to decide `deploy_parity.match`, plus the verdict it drew from them. `deploy_parity` answers whether the running process matches its source; this answers WHY, so a consumer can tell a real drift from an unknowable one instead of reading a bare false. Published under the health payload's `extra` (canonically `extra.parity_operands`), never as a second top-level field. Status: DRAFT v0 — introduced in contracts-v0.4.0; bump $id on breaking changes.\n\nThis schema exists because three boxes independently grew the same object with different vocabularies and different semantics for the same field names. It is normative about all four:\n\n1. BASIS names the CONCEPT compared, not the box's local variable names. Producers previously emitted six strings for two concepts (deploy_stamp_vs_checkout / boot_sha_vs_checkout_head / boot_sha_vs_live_head, and built_bundle_vs_live_bundle / boot_bundle_vs_disk_bundle / boot_bundle_vs_live_bundle).\n2. VERDICT is operand equality and nothing else. A box that also tracks whether its working tree is dirty reports that in `tree_clean`; folding it into the verdict made one box's `false` mean something the others' `false` did not.\n3. COMMIT SHA operands are compared strictly, so they must be full 40-character SHAs. Prefix comparison was a workaround for one box stamping a short SHA, and it silently accepts a 7-character collision.\n4. COMPLETE means both operand values were readable. It is not a statement about whether some unrelated probe (git porcelain) succeeded, and it is not implied by which branch the producer took.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["basis", "expected", "actual", "complete", "self_referential", "verdict"],
+  "properties": {
+    "basis": {
+      "type": "string",
+      "enum": ["commit_sha", "bundle_hash", "none"],
+      "description": "Which concept was compared. `commit_sha`: the commit the running process baked at boot against the commit its checkout is on now. `bundle_hash`: a content hash of the artifact the process is running against the artifact on disk. `none`: no operand pair was obtainable, so no comparison happened — `complete` must then be false and `verdict` null."
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "source"],
+      "description": "The reference side: what the process SHOULD be running.",
+      "properties": {
+        "name": {
+          "type": ["string", "null"],
+          "description": "The producer's own label for this operand, for humans reading a report. Free-form and never keyed on by a consumer; `basis` is the machine-readable identity."
+        },
+        "value": {
+          "type": ["string", "null"],
+          "description": "The compared value, or null when it could not be read. A `commit_sha` basis requires the full 40-character lowercase SHA — normalize a short SHA before comparing rather than comparing by prefix."
+        },
+        "source": {
+          "type": ["string", "null"],
+          "description": "Where the value came from (an env var name, a file path, a git command), so a wrong value can be traced to what produced it."
+        }
+      }
+    },
+    "actual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value", "source"],
+      "description": "The observed side: what the process IS running. Same field rules as `expected`.",
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "value": { "type": ["string", "null"] },
+        "source": { "type": ["string", "null"] }
+      }
+    },
+    "complete": {
+      "type": "boolean",
+      "description": "True when BOTH operand values are non-null, and therefore a comparison was possible. False means the answer is unknown, not negative. Do not set this from the success of an unrelated probe, and do not hardcode it per branch."
+    },
+    "self_referential": {
+      "type": "boolean",
+      "description": "True when the two operands are derived from the same artifact, so the comparison can only ever agree. A self-referential comparison is not evidence and must carry a null verdict — this flag exists so a consumer can refuse to count it as a pass. Note the casing: snake_case, like every other field here."
+    },
+    "tree_clean": {
+      "type": ["boolean", "null"],
+      "description": "Whether the served working tree has no uncommitted changes, when the producer can tell; null when it cannot. Reported ALONGSIDE the verdict, never folded into it: a box serving a dirty tree at the expected commit has verdict true and tree_clean false, and a consumer that cares about tree state reads this field."
+    },
+    "verdict": {
+      "type": ["boolean", "null"],
+      "description": "Whether `expected.value` and `actual.value` are equal, by exact string comparison. Null — never false — when `complete` is false or `self_referential` is true, because an unknowable comparison is not a failed one. Carries no other meaning: not tree cleanliness, not staleness, not liveness."
+    },
+    "note": {
+      "type": ["string", "null"],
+      "description": "Free prose for a human reading a drift report: what was missing, or what a false verdict implies for this box. Never parsed."
+    }
+  }
+}
