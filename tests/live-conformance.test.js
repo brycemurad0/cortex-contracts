@@ -41,7 +41,7 @@
  * Env:
  *   AF_RECEIPTS_URL      override the AF receipts endpoint (default http://127.0.0.1:3333/receipts)
  *   AF_ENQUEUE_URL       override the AF enqueue endpoint  (default http://127.0.0.1:3333/cortex/enqueue)
- *   MAESTRO_BASE_URL     override the Maestro base         (default http://100.81.13.93:8003)
+ *   MAESTRO_BASE_URL     override the Maestro base         (default http://127.0.0.1:8003)
  *   MAESTRO_AUTH         Maestro bearer token (sourced from ~/.hermes/.env; never printed).
  *                        Absent => the Maestro producer is SKIPPED (it is token-gated by design).
  *   CONFORMANCE_STRICT=1 treat an unreachable/unauthenticated producer as a FAILURE instead of a
@@ -53,7 +53,7 @@ const { validate } = require('./validator.js');
 
 const AF_RECEIPTS_URL = process.env.AF_RECEIPTS_URL || 'http://127.0.0.1:3333/receipts';
 const AF_ENQUEUE_URL = process.env.AF_ENQUEUE_URL || 'http://127.0.0.1:3333/cortex/enqueue';
-const MAESTRO_BASE_URL = (process.env.MAESTRO_BASE_URL || 'http://100.81.13.93:8003').replace(/\/+$/, '');
+const MAESTRO_BASE_URL = (process.env.MAESTRO_BASE_URL || 'http://127.0.0.1:8003').replace(/\/+$/, '');
 const MAESTRO_AUTH = process.env.MAESTRO_AUTH || process.env.AF_MAESTRO_AUTH || '';
 const STRICT = process.env.CONFORMANCE_STRICT === '1';
 const TIMEOUT_MS = Number(process.env.CONFORMANCE_TIMEOUT_MS || 4000);
